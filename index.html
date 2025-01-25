@@ -82,12 +82,16 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* 弹窗阴影 */
             animation: slideIn 0.5s; /* 添加滑入动画 */
             max-width: 600px; /* 最大宽度 */
+            position: relative; /* 使关闭按钮可以绝对定位 */
         }
         .close {
             color: #aaa;
             float: right;
             font-size: 28px;
             font-weight: bold;
+            position: absolute; /* 绝对定位 */
+            top: 10px; /* 距离顶部10px */
+            right: 20px; /* 距离右侧20px */
         }
         .close:hover,
         .close:focus {
@@ -96,6 +100,7 @@
             cursor: pointer;
         }
         .link-container {
+            position: relative; /* 使子元素可以绝对定位 */
             margin: 10px 0;
             padding: 15px; /* 增加内边距 */
             border: 1px solid #007bff;
@@ -126,6 +131,22 @@
         .link:hover {
             color: #0056b3; /* 鼠标悬停时的颜色 */
             text-decoration: underline;
+        }
+        .copy-button {
+            position: absolute; /* 绝对定位 */
+            top: 10px; /* 距离顶部10px */
+            right: 10px; /* 距离右侧10px */
+            padding: 2px 6px; /* 添加内边距，减小按钮大小 */
+            font-size: 0.8em; /* 设置字体大小 */
+            border: none; /* 去掉边框 */
+            border-radius: 5px; /* 圆角 */
+            background-color: #5bc0de; /* 更改为浅蓝色背景 */
+            color: white; /* 字体颜色 */
+            cursor: pointer; /* 鼠标悬停时的指针 */
+            transition: background-color 0.3s; /* 背景颜色变化 */
+        }
+        .copy-button:hover {
+            background-color: #31b0d5; /* 鼠标悬停时的背景颜色 */
         }
 
         /* 动画效果 */
@@ -193,11 +214,15 @@
                         // 确保为每个服务创建一个新的对象
                         currentUrls[currentService] = {}; 
                     } else if (currentService) {
-                        const [env, url] = line.split('=').map(item => item.trim());
-                        if (env && url) {
-                            // 确保 URL 被正确存储
-                            if (!currentUrls[currentService][env]) {
-                                currentUrls[currentService][env] = url; // 存储环境地址
+                        const equalIndex = line.indexOf('='); // 找到第一个等号的位置
+                        if (equalIndex !== -1) {
+                            const env = line.slice(0, equalIndex).trim(); // 提取环境名称
+                            const url = line.slice(equalIndex + 1).trim(); // 提取 URL，保留后面的等号
+                            if (env && url) {
+                                // 确保 URL 被正确存储
+                                if (!currentUrls[currentService][env]) {
+                                    currentUrls[currentService][env] = url; // 存储环境地址
+                                }
                             }
                         }
                     }
@@ -253,6 +278,25 @@
                     link.className = 'link';
                     link.innerText = urls[env]; // 显示对应的环境地址
 
+                    // 创建复制按钮
+                    const copyButton = document.createElement('button');
+                    copyButton.innerText = '复制';
+                    copyButton.className = 'copy-button'; // 添加样式类
+                    copyButton.onclick = function(event) {
+                        event.stopPropagation(); // 阻止事件冒泡
+                        navigator.clipboard.writeText(urls[env]) // 复制环境地址
+                            .then(() => {
+                                // 改变按钮颜色
+                                copyButton.style.backgroundColor = '#2ecc71'; // 深色
+                                setTimeout(() => {
+                                    copyButton.style.backgroundColor = '#5bc0de'; // 恢复原色
+                                }, 800); // 800ms后恢复
+                            })
+                            .catch(err => {
+                                console.error('复制失败:', err);
+                            });
+                    };
+
                     // 将整个 linkContainer 绑定点击事件
                     linkContainer.onclick = function() {
                         window.open(urls[env], '_blank'); // 跳转到对应的环境地址
@@ -260,6 +304,7 @@
 
                     linkContainer.appendChild(envLabel);
                     linkContainer.appendChild(link); // 添加链接到容器中
+                    linkContainer.appendChild(copyButton); // 添加复制按钮到容器中
                     modalBody.appendChild(linkContainer);
                 }
                 modal.style.display = "block"; // 显示弹窗
