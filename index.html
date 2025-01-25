@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的系统</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to right, #e0eafc, #cfdef3); /* 渐变背景 */
+            text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px; /* 增加标题下方间隔 */
+            font-size: 2.5em;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        .search-container {
+            margin: 30px 0; /* 增加搜索框上下间隔 */
+        }
+        .search-box {
+            width: 60%;
+            padding: 15px; /* 增加内边距 */
+            font-size: 1.2em;
+            border: 2px solid #007bff;
+            border-radius: 25px; /* 圆角边框 */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            outline: none; /* 去掉默认轮廓 */
+            transition: box-shadow 0.3s; /* 添加阴影变化 */
+        }
+        .search-box:focus {
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* 聚焦时的阴影效果 */
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 0 auto; /* 居中 */
+            max-width: 1200px; /* 最大宽度 */
+        }
+        .tab {
+            cursor: pointer;
+            margin: 10px;
+            padding: 20px;
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            background: white;
+            display: flex;
+            align-items: center; /* 垂直居中 */
+            justify-content: center; /* 水平居中 */
+            transition: transform 0.2s, box-shadow 0.2s; /* 添加阴影效果 */
+            flex: 0 0 calc(12.5% - 20px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 阴影效果 */
+            font-size: 1.2em; /* 增加字体大小 */
+        }
+        .tab:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* 鼠标悬停时的阴影效果 */
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.8); /* 更深的背景色 */
+            padding-top: 60px;
+            animation: fadeIn 0.5s; /* 添加淡入动画 */
+        }
+        .modal-content {
+            background-color: #ffffff;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* 弹窗阴影 */
+            animation: slideIn 0.5s; /* 添加滑入动画 */
+            max-width: 600px; /* 最大宽度 */
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: #ff0000; /* 鼠标悬停时的颜色 */
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .link-container {
+            margin: 10px 0;
+            padding: 15px; /* 增加内边距 */
+            border: 1px solid #007bff;
+            border-radius: 5px;
+            background: #e7f3ff;
+            transition: background 0.3s; /* 背景色变化 */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 添加阴影 */
+        }
+        .link-container:hover {
+            background: #d0e7ff; /* 鼠标悬停时的背景色 */
+        }
+        .env {
+            color: #007bff; /* 使用蓝色，与链接颜色一致 */
+            font-weight: bold;
+            display: inline-block;
+            margin-right: 10px;
+            font-size: 1.1em; /* 增加字体大小 */
+        }
+        .link {
+            display: block;
+            margin: 5px 0;
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s; /* 颜色变化 */
+            font-size: 1.1em; /* 增加字体大小 */
+        }
+        .link:hover {
+            color: #0056b3; /* 鼠标悬停时的颜色 */
+            text-decoration: underline;
+        }
+
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <h1>快捷打开网页</h1>
+
+    <!-- 搜索框部分 -->
+    <div class="search-container">
+        <input type="text" class="search-box" id="searchInput" placeholder="在这里输入搜索内容...">
+    </div>
+
+    <div class="container" id="tabs"></div>
+
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        let searchUrl = ''; // 用于存储搜索地址
+
+        fetch('config.txt')
+            .then(response => response.text())
+            .then(data => {
+                const lines = data.split('\n');
+                const tabsContainer = document.getElementById('tabs');
+                let currentService = '';
+                let currentUrls = {}; // 存储所有服务的环境地址
+
+                lines.forEach(line => {
+                    line = line.trim();
+                    if (line.startsWith('search=')) {
+                        // 读取搜索地址
+                        searchUrl = line.split('=')[1].trim(); // 存储搜索地址
+                    } else if (line.startsWith('[') && line.endsWith(']')) {
+                        // 如果当前服务存在，创建下一个服务的按钮
+                        if (currentService) {
+                            const serviceTab = document.createElement('div');
+                            serviceTab.className = 'tab';
+                            serviceTab.innerText = currentService;
+                            tabsContainer.appendChild(serviceTab);
+
+                            // 使用闭包确保每个标签的点击事件引用正确的 currentService
+                            serviceTab.onclick = (function(service) {
+                                return function() {
+                                    showModal(currentUrls[service]);
+                                };
+                            })(currentService);
+                        }
+
+                        // 更新当前服务
+                        currentService = line.slice(1, -1);
+                        // 确保为每个服务创建一个新的对象
+                        currentUrls[currentService] = {}; 
+                    } else if (currentService) {
+                        const [env, url] = line.split('=').map(item => item.trim());
+                        if (env && url) {
+                            // 确保 URL 被正确存储
+                            if (!currentUrls[currentService][env]) {
+                                currentUrls[currentService][env] = url; // 存储环境地址
+                            }
+                        }
+                    }
+                });
+
+                // 处理最后一个服务
+                if (currentService) {
+                    const serviceTab = document.createElement('div');
+                    serviceTab.className = 'tab';
+                    serviceTab.innerText = currentService;
+                    tabsContainer.appendChild(serviceTab);
+
+                    // 使用闭包确保每个标签的点击事件引用正确的 currentService
+                    serviceTab.onclick = (function(service) {
+                        return function() {
+                            showModal(currentUrls[service]);
+                        };
+                    })(currentService);
+                }
+            });
+
+        // 搜索功能
+        document.getElementById('searchInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                const query = this.value;
+                if (query && searchUrl) {
+                    window.open(`${searchUrl}?q=${encodeURIComponent(query)}`, '_blank'); // 在新标签页中打开搜索结果
+                }
+            }
+        });
+
+        // 显示弹窗
+        function showModal(urls) {
+            const modal = document.getElementById("myModal");
+            const modalBody = document.getElementById("modal-body");
+            modalBody.innerHTML = ''; // 清空内容
+
+            console.log(urls); // 调试输出，确保显示的是正确的 URL
+
+            // 确保 urls 是一个对象并且有内容
+            if (urls && Object.keys(urls).length > 0) {
+                for (const env in urls) {
+                    const linkContainer = document.createElement('div');
+                    linkContainer.className = 'link-container';
+
+                    const envLabel = document.createElement('span');
+                    envLabel.className = 'env';
+                    envLabel.innerText = env;
+
+                    const link = document.createElement('a');
+                    link.href = urls[env];
+                    link.target = '_blank';
+                    link.className = 'link';
+                    link.innerText = urls[env]; // 显示对应的环境地址
+
+                    // 将整个 linkContainer 绑定点击事件
+                    linkContainer.onclick = function() {
+                        window.open(urls[env], '_blank'); // 跳转到对应的环境地址
+                    };
+
+                    linkContainer.appendChild(envLabel);
+                    linkContainer.appendChild(link); // 添加链接到容器中
+                    modalBody.appendChild(linkContainer);
+                }
+                modal.style.display = "block"; // 显示弹窗
+            } else {
+                modalBody.innerText = '没有可用的链接'; // 如果没有链接，显示提示
+                modal.style.display = "block"; // 显示弹窗
+            }
+        }
+
+        // 关闭弹窗
+        document.querySelector('.close').onclick = function() {
+            document.getElementById("myModal").style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById("myModal");
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>
