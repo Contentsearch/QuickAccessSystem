@@ -1,0 +1,19 @@
+search=https://www.google.com/search
+[百度]
+   dev=https://www.baidu-dev.com
+   test=https://www.baidu-test.com
+   pre=https://www.baidu-pre.com
+   uat=https://www.baidu-uat.com
+   prod=https://www.baidu.com
+   [谷歌]
+   dev=https://www.google-dev.com
+   测试环境=https://www.google-test.com
+   pre=https://www.google-pre.com
+   uat=https://www.google-uat.com
+   prod=https://www.google.com
+   [BING]
+   dev=https://www.bing-dev.com
+   test=https://www.bing-test.com
+   pre=https://www.bing-pre.com
+   prod=https://www.bing.com
+ 
